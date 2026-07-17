@@ -23,6 +23,7 @@ lerna-debug.log*
 .env
 .env.*
 !.env.example
+.onboarding-sessions.json
 
 # Wrangler / Cloudflare
 .wrangler/

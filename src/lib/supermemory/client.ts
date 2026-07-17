@@ -10,13 +10,11 @@ export function getSupermemoryClient(): Supermemory {
         "SUPERMEMORY_API_KEY is not set. Add it to your .env file (see .env.example).",
       );
     }
-    
-    // Explicitly configure for local Supermemory as requested
-    const baseURL = process.env.SUPERMEMORY_BASE_URL ?? "http://localhost:6767";
-    
-    client = new Supermemory({ 
+
+    const baseURL = process.env.SUPERMEMORY_BASE_URL;
+    client = new Supermemory({
       apiKey,
-      baseURL
+      ...(baseURL ? { baseURL } : {}),
     });
   }
   return client;

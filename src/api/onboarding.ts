@@ -100,7 +100,7 @@ export const sendOnboardingMessage = createServerFn({ method: "POST" })
     session.depth += 1;
 
     const userWantsDone =
-      /\b(done|finish|complete|that's all|thats all|i'm done|im done)\b/i.test(
+      /\b(done|finish|complete|extract my data|extract profile|that's all|thats all|i'm done|im done)\b/i.test(
         data.message,
       );
 
