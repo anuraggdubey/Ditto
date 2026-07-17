@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  ditto-app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      # Required for auth/session cookies
+      - SESSION_SECRET=${SESSION_SECRET:-super-secret-key-for-local-dev}
+      # The LLM API keys
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # Connects directly to the supermemory container using Docker's internal networking
+      - SUPERMEMORY_BASE_URL=http://supermemory:6767
+      - SUPERMEMORY_API_KEY=${SUPERMEMORY_API_KEY:-default-local-key}
+    depends_on:
+      - supermemory
+
+  supermemory:
+    image: supermemory/supermemory-local:latest
+    ports:
+      - "6767:6767"
+    volumes:
+      - supermemory-data:/data
+    environment:
+      - API_KEY=${SUPERMEMORY_API_KEY:-default-local-key}
+
+volumes:
+  supermemory-data:

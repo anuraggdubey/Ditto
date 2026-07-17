@@ -35,12 +35,20 @@ export async function extractProfileFromTranscript(params: {
 
   const model = createLLM();
 
-  const { object } = await generateObject({
+  const { text } = await generateText({
     model,
-    schema: extractedProfileSchema,
-    system: PROFILE_EXTRACT_SYSTEM,
+    system: PROFILE_EXTRACT_SYSTEM + "\n\nIMPORTANT: You must return ONLY valid raw JSON matching the requested schema. No markdown, no backticks, no explanations.",
     prompt: buildProfileExtractPrompt(transcript, params.language),
   });
+
+  let object;
+  try {
+    const cleanText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    object = extractedProfileSchema.parse(JSON.parse(cleanText));
+  } catch (e) {
+    console.error("Failed to parse profile JSON", e, text);
+    throw new Error("Failed to extract profile: Invalid JSON returned from LLM.");
+  }
 
   const now = new Date().toISOString();
   const profile = voiceDnaProfileSchema.parse({
@@ -86,39 +94,47 @@ export async function refineProfileFromFeedback(params: {
 }): Promise<Partial<VoiceDnaProfile>> {
   const model = createLLM();
 
-  const { object } = await generateObject({
+  const { text } = await generateText({
     model,
-    schema: z.object({
-      avoid_list: z.array(z.string()).optional(),
-      writing_style: z
-        .object({
-          tone: z.array(z.string()).optional(),
-        })
-        .optional(),
-      personality: z.array(z.string()).optional(),
-    }),
     system:
-      "Given user feedback on a generated tweet, extract profile updates. Only include fields that should change. Prefer adding to avoid_list on negative feedback.",
+      "Given user feedback on a generated tweet, extract profile updates. Only include fields that should change. Prefer adding to avoid_list on negative feedback.\n\nIMPORTANT: You must return ONLY valid raw JSON. No markdown, no backticks, no explanations.",
     prompt: `Current profile tone: ${params.currentProfile.writing_style.tone.join(", ")}
 Current avoid list: ${params.currentProfile.avoid_list.join(", ")}
 
 User feedback: ${params.feedbackNote}
 
-Return minimal profile updates.`,
+Return minimal profile updates as JSON.`,
   });
 
-  return object;
+  let object;
+  try {
+    const cleanText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    object = JSON.parse(cleanText);
+  } catch (e) {
+    console.error("Failed to parse refinement JSON", e, text);
+    object = {};
+  }
+
+  return object as Partial<VoiceDnaProfile>;
 }
 
 export async function generateOnboardingReply(
   messages: Array<{ role: "user" | "assistant"; content: string }>,
 ): Promise<string> {
   const model = createLLM();
-  const { buildOnboardingMessages } = await import("@/lib/llm/prompts/onboarding");
+  const { buildOnboardingMessages, ONBOARDING_SYSTEM_PROMPT } = await import("@/lib/llm/prompts/onboarding");
+
+  const formattedMessages = buildOnboardingMessages(messages);
+  
+  // Llama 3 / Groq strict requirement: conversation history MUST start with a 'user' message
+  if (formattedMessages.length > 0 && formattedMessages[0].role === "assistant") {
+    formattedMessages.unshift({ role: "user", content: "Hi, I'm ready to start onboarding." });
+  }
 
   const { text } = await generateText({
     model,
-    messages: buildOnboardingMessages(messages),
+    system: ONBOARDING_SYSTEM_PROMPT,
+    messages: formattedMessages,
   });
 
   return text;

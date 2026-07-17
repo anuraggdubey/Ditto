@@ -141,14 +141,13 @@ function Nav({ dark, onToggleDark }: { dark: boolean; onToggleDark: () => void }
         {/* Center: Links */}
         <div className="hidden md:flex items-center gap-1">
           {[
-            { label: "Product", href: "#product" },
-            { label: "How it works", href: "#how" },
-            { label: "Pricing", href: "#pricing" },
-            { label: "Blog", href: "#blog" },
+            { label: "Onboarding", to: "/onboarding" },
+            { label: "Profile", to: "/profile" },
+            { label: "Inspiration", to: "/inspiration" },
           ].map((link) => (
-            <a
+            <Link
               key={link.label}
-              href={link.href}
+              to={link.to}
               className="rounded-full px-3 py-1.5 text-[13px] font-medium transition-all duration-200"
               style={{ color: "var(--graphite)" }}
               onMouseEnter={(e) => {
@@ -161,7 +160,7 @@ function Nav({ dark, onToggleDark }: { dark: boolean; onToggleDark: () => void }
               }}
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </div>
 

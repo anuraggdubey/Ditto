@@ -25,11 +25,8 @@ Never generate tweets during onboarding — only gather voice profile informatio
 export function buildOnboardingMessages(
   messages: Array<{ role: "user" | "assistant"; content: string }>,
 ) {
-  return [
-    { role: "system" as const, content: ONBOARDING_SYSTEM_PROMPT },
-    ...messages.map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    })),
-  ];
+  return messages.map((m) => ({
+    role: m.role as "user" | "assistant",
+    content: m.content,
+  }));
 }

@@ -105,3 +105,67 @@ export async function getInspirationPatterns(userId: string): Promise<string[]> 
 
   return patterns;
 }
+
+export async function syncTwitterBookmarksToSupermemory(userId: string): Promise<{ inspiration: InspirationDataset, count: number }> {
+  const existing = await getInspiration(userId);
+  const client = getSupermemoryClient();
+  
+  // List all recent documents in the user's supermemory
+  let docs: any[] = [];
+  try {
+    const listRes = await client.documents.list({
+      limit: 100,
+      includeContent: true,
+    });
+    docs = (listRes as any).memories || (listRes as any).data || (listRes as any).results || [];
+  } catch (err) {
+    console.error("Failed to list Supermemory bookmarks", err);
+  }
+
+  // Filter docs for twitter.com or x.com
+  const twitterDocs = docs.filter(d => {
+    const type = d.type || (d.metadata && typeof d.metadata === "object" ? (d.metadata as any).type : undefined);
+    const content = (d.content || d.summary || "").toLowerCase();
+    const title = (d.title || "").toLowerCase();
+    const url = ((d.metadata && typeof d.metadata === "object" ? (d.metadata as any).url : "") || "").toLowerCase();
+    return type === "tweet" || content.includes("twitter.com") || content.includes("x.com") || title.includes("tweet") || url.includes("twitter.com") || url.includes("x.com");
+  });
+
+  const existingBookmarksMap = new Map(existing.bookmarks.map(b => [b.tweet_id, b]));
+
+  for (const doc of twitterDocs) {
+    const id = doc.id || doc.documentId;
+    if (!id) continue;
+    
+    const docUrl = doc.metadata && typeof doc.metadata === "object" ? (doc.metadata as any).url : undefined;
+    const extracted = doc.summary || doc.content ? `Pattern extracted from bookmark: ${doc.title || id}. Core topic or structure: ${(doc.summary || doc.content || "").substring(0, 100)}...` : undefined;
+    const content = doc.content || doc.summary || undefined;
+    
+    existingBookmarksMap.set(id, {
+      tweet_id: id,
+      synced_at: existingBookmarksMap.get(id)?.synced_at || new Date().toISOString(),
+      extracted_pattern: extracted || existingBookmarksMap.get(id)?.extracted_pattern,
+      content: content || existingBookmarksMap.get(id)?.content,
+      url: docUrl || existingBookmarksMap.get(id)?.url,
+    });
+  }
+  
+  const updatedBookmarks = Array.from(existingBookmarksMap.values());
+  const newCount = updatedBookmarks.length - existing.bookmarks.length;
+
+  if (newCount > 0 || updatedBookmarks.some(b => !existing.bookmarks.find(e => e.tweet_id === b.tweet_id && e.content === b.content))) {
+    const updated = await saveInspiration({
+      ...existing,
+      bookmarks: updatedBookmarks,
+      last_synced: new Date().toISOString(),
+    });
+    // Return count of *new* bookmarks, but at least 1 if we backfilled content so the toast shows success
+    return { inspiration: updated, count: newCount > 0 ? newCount : 1 };
+  }
+
+  const updated = await saveInspiration({
+    ...existing,
+    last_synced: new Date().toISOString(),
+  });
+  return { inspiration: updated, count: 0 };
+}

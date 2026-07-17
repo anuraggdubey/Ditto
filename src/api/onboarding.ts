@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -9,7 +11,29 @@ import {
   generateOnboardingReply,
 } from "@/lib/llm/profile-extractor";
 
-const sessions = new Map<string, OnboardingSession>();
+const SESSION_FILE = path.join(process.cwd(), ".onboarding-sessions.json");
+
+function loadSessions(): Map<string, OnboardingSession> {
+  try {
+    if (fs.existsSync(SESSION_FILE)) {
+      const data = fs.readFileSync(SESSION_FILE, "utf-8");
+      return new Map(Object.entries(JSON.parse(data)));
+    }
+  } catch (e) {
+    console.error("Failed to load sessions", e);
+  }
+  return new Map();
+}
+
+function saveSessions() {
+  try {
+    fs.writeFileSync(SESSION_FILE, JSON.stringify(Object.fromEntries(sessions)), "utf-8");
+  } catch (e) {
+    console.error("Failed to save sessions", e);
+  }
+}
+
+const sessions = loadSessions();
 
 const ONBOARDING_COMPLETE_MARKER = "[ONBOARDING_COMPLETE]";
 
@@ -37,11 +61,12 @@ export const startOnboardingSession = createServerFn({ method: "POST" })
 
     const greeting =
       data.mode === "voice"
-        ? "Voice onboarding via Pipecat is coming soon. For now, let's chat by text — tell me what you usually post about on X."
-        : "Hey! I'm Voice DNA. I'll learn how you write through a quick conversation — not a form. What do you usually post about on X?";
+        ? "Voice onboarding via Pipecat is coming soon. For now, let's chat by text."
+        : "Hey! I'm Voice DNA. To save time, please introduce yourself, your target audience, and your writing style briefly in one single message! When you're finished, just say 'extract my data' and I'll build your profile instantly.";
 
     session.messages.push({ role: "assistant", content: greeting });
     sessions.set(sessionId, session);
+    saveSessions();
 
     return {
       sessionId,
@@ -105,6 +130,7 @@ export const sendOnboardingMessage = createServerFn({ method: "POST" })
     }
 
     sessions.set(data.sessionId, session);
+    saveSessions();
 
     return {
       message: assistantText,

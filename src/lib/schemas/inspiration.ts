@@ -13,6 +13,8 @@ export const inspirationDatasetSchema = z.object({
         tweet_id: z.string(),
         synced_at: z.string(),
         extracted_pattern: z.string().optional(),
+        content: z.string().optional(),
+        url: z.string().optional(),
       }),
     )
     .default([]),
@@ -25,6 +27,7 @@ export const inspirationDatasetSchema = z.object({
     )
     .default([]),
   admired_creators: z.array(admiredCreatorSchema).default([]),
+  x_handle: z.string().nullable().default(null),
   last_synced: z.string().nullable().default(null),
 });
 

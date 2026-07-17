@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.15",
+    "@ai-sdk/groq": "^4.0.11",
     "@ai-sdk/openai": "^4.0.15",
     "@fontsource/geist-sans": "^5.2.5",
     "@hookform/resolvers": "^5.2.2",
@@ -62,6 +63,7 @@
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.71.2",
     "react-resizable-panels": "^4.6.5",
+    "react-tweet": "^3.3.1",
     "recharts": "^2.15.4",
     "sonner": "^2.0.7",
     "supermemory": "^4.24.12",
