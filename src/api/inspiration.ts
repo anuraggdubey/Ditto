@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getOrCreateUserId } from "@/api/auth";
 import {
   addAdmiredCreators,
+  addManualBookmarkWithPattern,
   getInspiration,
   saveInspiration,
   syncTwitterBookmarksToSupermemory,
@@ -47,18 +48,6 @@ export const addManualBookmark = createServerFn({ method: "POST" })
   .validator(z.object({ url: z.string(), tweet_id: z.string() }))
   .handler(async ({ data }) => {
     const userId = getOrCreateUserId();
-    const inspiration = await getInspiration(userId);
-    
-    // Check if it already exists
-    if (!inspiration.bookmarks.some((b) => b.tweet_id === data.tweet_id)) {
-      inspiration.bookmarks.push({
-        tweet_id: data.tweet_id,
-        url: data.url,
-        synced_at: new Date().toISOString(),
-        extracted_pattern: "Saved manually. Pending extraction.",
-      });
-      await saveInspiration(inspiration);
-    }
-    
+    await addManualBookmarkWithPattern(userId, data.url, data.tweet_id);
     return { success: true };
   });
