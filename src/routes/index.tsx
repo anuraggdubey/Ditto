@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { SignatureLine } from "@/components/SignatureLine";
 import { useCallback, useState, useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -188,13 +188,18 @@ function Nav({ dark, onToggleDark }: { dark: boolean; onToggleDark: () => void }
             {dark ? <Sun className="h-[14px] w-[14px]" /> : <Moon className="h-[14px] w-[14px]" />}
           </button>
           
-          <button className="hidden px-3 py-1.5 text-[13px] font-medium transition-colors hover:text-ink sm:inline-block" style={{ color: "var(--graphite)" }}>
-            Log in
-          </button>
+          <Link
+            to="/profile"
+            className="hidden px-3 py-1.5 text-[13px] font-medium transition-colors hover:text-ink sm:inline-block"
+            style={{ color: "var(--graphite)" }}
+          >
+            Profile
+          </Link>
           
           <div className="relative group ml-1">
             <div className="absolute inset-0 rounded-full bg-[var(--signal)] opacity-40 blur-md transition-all duration-500 group-hover:opacity-70 group-hover:blur-lg"></div>
-            <button
+            <Link
+              to="/onboarding"
               className="relative flex items-center justify-center gap-1.5 h-[36px] px-5 rounded-full font-bold text-[13px] transition-all"
               style={{
                 background: "var(--signal)",
@@ -203,7 +208,7 @@ function Nav({ dark, onToggleDark }: { dark: boolean; onToggleDark: () => void }
               }}
             >
               Start Onboarding
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -276,13 +281,19 @@ function Hero() {
           className="fade-up mt-8 flex flex-wrap items-center gap-3"
           style={{ animationDelay: "160ms" }}
         >
-          <button className="inline-flex items-center gap-2 rounded-[4px] bg-ink px-5 py-3 text-[14px] font-medium text-paper transition-colors hover:bg-signal">
+          <Link
+            to="/onboarding"
+            className="inline-flex items-center gap-2 rounded-[4px] bg-ink px-5 py-3 text-[14px] font-medium text-paper transition-colors hover:bg-signal"
+          >
             Start Voice Onboarding
             <span aria-hidden>→</span>
-          </button>
-          <button className="inline-flex items-center rounded-[4px] px-4 py-3 text-[14px] font-medium text-graphite transition-colors hover:text-ink">
+          </Link>
+          <a
+            href="#how"
+            className="inline-flex items-center rounded-[4px] px-4 py-3 text-[14px] font-medium text-graphite transition-colors hover:text-ink"
+          >
             See how it works
-          </button>
+          </a>
         </div>
 
         <div
@@ -291,7 +302,7 @@ function Hero() {
         >
           <span>Powered by <span className="text-ink">Pipecat Voice</span></span>
           <span className="text-graphite-faint">·</span>
-          <span>Stored in <span className="text-ink">Supermemory Local</span></span>
+          <span>Stored in <span className="text-ink">Supermemory</span></span>
           <span className="text-graphite-faint">·</span>
           <span><span className="text-ink">Continuous</span> feedback loop</span>
         </div>
